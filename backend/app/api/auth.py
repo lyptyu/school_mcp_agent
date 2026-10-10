@@ -1,3 +1,4 @@
+from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import APIRouter, Depends
 from app.common.response import Response
 from app.schemas.auth import LoginRequest
@@ -18,6 +19,18 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
         message="登录成功",
         data=result,
     )
+
+@router.post("/token", summary="Swagger 授权登录（表单，仅供文档页使用）")
+def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db),
+):
+    """给 Swagger 的 Authorize 按钮用：入参是表单，出参必须是 access_token"""
+    result = auth_service.login(
+        db, LoginRequest(username=form_data.username, password=form_data.password)
+    )
+    # 这里不能用 Response.success 包装，Swagger 只认顶层的 access_token 字段
+    return {"access_token": result.token, "token_type": "bearer"}
 
 
 @router.post("/register")
