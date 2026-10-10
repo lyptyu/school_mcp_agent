@@ -1,17 +1,13 @@
 <template>
   <div>
     <el-container style="min-height: 100vh">
-      <el-header
-        style="
+      <el-header style="
           display: flex;
           align-items: center;
           border-bottom: 1px solid #ddd;
           background-color: #fff;
-        "
-      >
-        <div
-          style="flex: 1; display: flex; align-items: center; font-size: 24px; font-weight: bold"
-        >
+        ">
+        <div style="flex: 1; display: flex; align-items: center; font-size: 24px; font-weight: bold">
           <img style="width: 40px" src="@/assets/imgs/logo.png" alt="" />
           <div style="margin-left: 5px">智能系统</div>
         </div>
@@ -33,19 +29,23 @@
       </el-header>
       <el-container>
         <el-aside width="220px">
-          <el-menu
-            router
-            :default-active="router.currentRoute.value.path"
-            style="height: 100%"
-            default-active="/manager/home"
-          >
+          <el-menu router :default-active="router.currentRoute.value.path" style="height: 100%"
+            default-active="/manager/home">
             <el-menu-item index="/manager/home">
               <el-icon><icon-menu /></el-icon>
               <span>系统首页</span>
             </el-menu-item>
             <el-menu-item index="/manager/user" v-if="userInfo?.role === 'admin'">
-              <el-icon><User /></el-icon>
+              <el-icon>
+                <User />
+              </el-icon>
               <span>用户管理</span>
+            </el-menu-item>
+            <el-menu-item index="/manager/course" v-if="userInfo?.role === 'admin'">
+              <el-icon>
+                <Reading />
+              </el-icon>
+              课程管理
             </el-menu-item>
           </el-menu>
         </el-aside>
@@ -61,8 +61,7 @@
 import router from '@/router'
 import { logout } from '@/utils/auth'
 import { useUser } from '@/utils/user'
-import { Menu as IconMenu, User } from '@element-plus/icons-vue'
-
+import { Menu as IconMenu, User, Reading } from '@element-plus/icons-vue'
 const { userInfo } = useUser()
 
 const handleCommand = (command) => {

@@ -10,7 +10,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 from fastapi import APIRouter
 
-router = APIRouter(prefix='/course', tags=['课程相关api'])
+router = APIRouter(prefix='/courses', tags=['课程相关api'])
 
 
 @router.get("")
