@@ -5,7 +5,7 @@ from app.database import Base
 
 class Course(Base):
     __tablename__ = "courses"
-    __table_args__ = {"comment": "用户信息表"}
+    __table_args__ = {"comment": "课程信息表"}
 
     name: Mapped[str] = mapped_column(
         String(50), comment="课程名称", nullable=False

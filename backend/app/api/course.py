@@ -23,25 +23,25 @@ def list_courses(keywords: str | None = Query(default=None,
 
 
 @router.post("")
-def create_courses(data: CourseCreateRequest,
+def create_course(data: CourseCreateRequest,
                    _: User = Depends(get_current_admin),
                    db: Session = Depends(get_db)):
-    course = course_service.create_courses(db, data)
+    course = course_service.create_course(db, data)
     return Response.success(data=course)
 
 
 @router.put("/{course_id}")
-def update_courses(course_id: int,
+def update_course(course_id: int,
                    data: CourseUpdateRequest,
                    _: User = Depends(get_current_admin),
                    db: Session = Depends(get_db)):
-    course = course_service.update_courses(db, course_id, data)
+    course = course_service.update_course(db, course_id, data)
     return Response.success(data=course)
 
 
 @router.delete("/{course_id}")
-def delete_courses(course_id: int,
+def delete_course(course_id: int,
                    _: User = Depends(get_current_admin),
                    db: Session = Depends(get_db)):
-    course = course_service.delete_courses(db, course_id)
+    course = course_service.delete_course(db, course_id)
     return Response.success()

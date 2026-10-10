@@ -1,3 +1,4 @@
+from app.models.schedule import Schedule
 from app.schemas.course import CourseUpdateRequest
 from app.common.exceptions import BusinessException
 from app.schemas.course import CourseCreateRequest
@@ -20,7 +21,7 @@ def list_courses(db: Session,
     return [CourseResponse.model_validate(row) for row in rows]
 
 
-def create_courses(db: Session, data: CourseCreateRequest) -> CourseResponse:
+def create_course(db: Session, data: CourseCreateRequest) -> CourseResponse:
     code = data.code.strip()
     if not code:
         raise BusinessException(message="课程编码必传")
@@ -37,8 +38,8 @@ def create_courses(db: Session, data: CourseCreateRequest) -> CourseResponse:
     return CourseResponse.model_validate(course)
 
 
-def update_courses(db: Session, course_id: int,
-                   data: CourseUpdateRequest) -> CourseResponse:
+def update_course(db: Session, course_id: int,
+                  data: CourseUpdateRequest) -> CourseResponse:
     row = db.query(Course).filter(Course.id == course_id).first()
     if not row:
         raise BusinessException(message="课程不存在")
@@ -61,9 +62,14 @@ def update_courses(db: Session, course_id: int,
     db.refresh(row)
     return CourseResponse.model_validate(row)
 
-def delete_courses(db: Session, course_id: int) -> None:
+
+def delete_course(db: Session, course_id: int) -> None:
     row = db.query(Course).filter(Course.id == course_id).first()
     if not row:
         raise BusinessException(message="课程不存在")
+    linked = db.query(Schedule).filter(
+        Schedule.course_id == course_id).filter()
+    if linked:
+        raise BusinessException(message="该课程已关联课表，无法删除")
     db.delete(row)
     db.commit()
