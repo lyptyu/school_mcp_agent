@@ -75,6 +75,26 @@ def list_schedules(
         for row, username, user_name, course_name in rows
     ])
 
+def list_schedules_as_dict(
+    db: Session,
+    user_id: int | None = None,
+    date_str: str | None = None, #YYYY-MM-dd
+) -> list[dict]:
+    """查询全部课表列表,返回字典里列表，MCP工具使用"""
+    date_text = (date_str or "").strip()
+    class_date = date.fromisoformat(date_text) if date_text else None
+    items = list_schedules(db,user_id,class_date).list
+    return [
+        {
+            "date":item.class_date.isoformat(),
+            "period":item.period,
+            "course_id":item.course_id,
+            "course_name":item.course_name,
+            "location":item.location,
+        }
+        for item in items
+    ]
+
 
 def create_schedules(db: Session,
                      data: ScheduleCreateRequest) -> ScheduleResponse:

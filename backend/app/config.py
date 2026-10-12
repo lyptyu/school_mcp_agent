@@ -10,9 +10,12 @@ class Settings(BaseSettings):
     JWT_EXPIRE_HOURS: int = 24
     JWT_ALGORITHM: str = "HS256"
 
-    model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env", env_file_encoding="utf-8"
-    )
+    MCP_HOST: str = "127.0.0.1"
+    MCP_PORT: int = 8001
+    MCP_PATH: str = '/mcp'
+
+    model_config = SettingsConfigDict(env_file=BASE_DIR / ".env",
+                                      env_file_encoding="utf-8")
 
 
 settings = Settings()
@@ -20,7 +23,6 @@ settings = Settings()
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100M
-
 
 ALLOWED_EXTENSIONS = {
     ".jpg",
@@ -36,4 +38,4 @@ ALLOWED_EXTENSIONS = {
     ".zip",
 }
 
-STUDY_PLAN_MAX_LENGTH=2000
+STUDY_PLAN_MAX_LENGTH = 2000
