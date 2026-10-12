@@ -16,6 +16,7 @@ const router = createRouter({
         { path: 'user', name: 'User', component: () => import('@/views/User.vue') },
         { path: 'course', name: 'Course', component: () => import('@/views/Course.vue') },
         { path: 'schedule', name: 'Schedule', component: () => import('@/views/Schedule.vue') },
+        { path: 'study-plan', name: 'StudyPlan', component: () => import('@/views/StudyPlan.vue') },
 {
   path: 'schedule-manage',
   name: 'ScheduleManage',

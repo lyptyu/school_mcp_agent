@@ -35,3 +35,5 @@ ALLOWED_EXTENSIONS = {
     ".xlsx",
     ".zip",
 }
+
+STUDY_PLAN_MAX_LENGTH=2000
