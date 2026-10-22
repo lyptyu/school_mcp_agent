@@ -1,9 +1,11 @@
+import json
 from langchain_core.messages import AIMessage
 from langchain_core.messages import HumanMessage
 from langchain_core.messages import BaseMessage
 from app.schemas.chat import ChatMessage
 from app.common.exceptions import BusinessException
 from langchain_openai import ChatOpenAI
+
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from app.config import settings
 import logging
@@ -15,8 +17,7 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """你是校园课程智能助手，使用中文回答。
 今天是 {today}。将“明天”“这周三”等相对日期换算成 YYYY-MM-DD。
 本周按周一至周日计算；日期含义不明确时，先询问用户。
-get_my_schedules 查询当前登录用户自己的课表。
-参数 date 为可选的 YYYY-MM-DD；不传则查询全部课表。
+
 回答规则：
 1. 查询课表时必须调用工具，只根据本轮工具返回的数据回答。
 2. 查询某一天时传 date；查询一周时可获取全部课表，再按日期筛选。
@@ -127,3 +128,58 @@ async def ask(question: str, history: list[ChatMessage], authorization: str) -> 
         ) from exc
     new_messages = result["messages"][len(input_messages) :]
     return _read_result(new_messages)
+
+def _sse(event_type: str, data: dict) -> str:
+    """将事件类型和数据编码为一条 SSE 消息。"""
+    payload = json.dumps({"type": event_type, **data}, ensure_ascii=False)
+    return f"data: {payload}\n\n"
+
+async def stream_ask(question: str, history: list[ChatMessage], authorization: str):
+    """执行 Agent，并依次返回处理状态、工具过程和回答。"""
+    try:
+        yield _sse("status", {"message": "正在加载课表工具"})
+        model = _build_model()
+        # 工具按本次 JWT 加载，查询身份仍由 MCP 确定。
+        tools = await _load_mcp_tools(authorization)
+        # 没有工具时停止，避免模型假装已完成课表查询。
+        if not tools:
+            raise BusinessException(message="MCP 未返回可用工具，请检查 MCP 服务")
+
+        agent = create_agent(
+            model, tools, system_prompt=SYSTEM_PROMPT.format(today=date.today().isoformat())
+        )
+        messages = _build_messages(history, question)
+        model_messages = []
+        yield _sse("status", {"message": "正在生成回答"})
+        async for event in agent.astream_events(
+            {"messages": messages},
+            version="v2",
+            config={"recursion_limit": settings.AGENT_RECURSION_LIMIT},
+        ):
+            kind = event["event"]
+            # 模型生成中的文字用于即时显示；工具参数不作为正文显示。
+            if kind == "on_chat_model_stream":
+                text = event["data"]["chunk"].text
+                if text:
+                    yield _sse("token", {"content": text})
+            # 工具开始和返回只展示过程，返回不等于业务查询成功。
+            elif kind == "on_tool_start":
+                yield _sse("tool_start", {"name": event["name"]})
+            elif kind == "on_tool_end":
+                yield _sse("tool_end", {"name": event["name"]})
+            # 每次模型调用结束后收集完整消息，复用第 08 节的最终答案检查。
+            elif kind == "on_chat_model_end":
+                model_messages.append(event["data"]["output"])
+
+        result = _read_result(model_messages)
+        yield _sse("done", result)
+    except GraphRecursionError:
+        logger.exception("流式 Agent 执行步数达到上限")
+        yield _sse("error", {"message": "本次处理的步骤过多，请缩小问题范围重试"})
+    except BusinessException as exc:
+        logger.warning("流式对话业务失败：%s", exc.message)
+        yield _sse("error", {"message": exc.message})
+    except Exception:
+        # 响应已经开始，错误也通过 SSE 返回，具体异常保留在日志中。
+        logger.exception("流式 Agent 执行失败")
+        yield _sse("error", {"message": "对话处理失败，请检查后端日志"})

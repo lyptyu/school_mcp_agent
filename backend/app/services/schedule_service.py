@@ -10,7 +10,6 @@ from app.common.response import PageResponse
 from datetime import date
 from sqlalchemy.orm import Session
 
-
 def _to_response(
     row: Schedule,
     username: str,
@@ -147,3 +146,4 @@ def delete_schedule(db: Session, schedule_id: int):
         raise BusinessException(message='课表不存在')
     db.delete(row)
     db.commit()
+
