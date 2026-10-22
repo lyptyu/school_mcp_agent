@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     MCP_PORT: int = 8001
     MCP_PATH: str = '/mcp'
 
+    # 大模型相关配置
+    LLM_BASE_URL: str
+    LLM_API_KEY: str
+    LLM_MODEL_NAME: str
+    AGENT_RECURSION_LIMIT: int = 14
+
     model_config = SettingsConfigDict(env_file=BASE_DIR / ".env",
                                       env_file_encoding="utf-8")
 
